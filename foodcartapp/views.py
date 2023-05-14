@@ -70,5 +70,6 @@ def register_order(request):
             })
 
     print(order_detail(request))
+    
 
     return JsonResponse({})

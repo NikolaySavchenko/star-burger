@@ -1,3 +1,4 @@
+import json
 from django.http import JsonResponse
 from django.templatetags.static import static
 
@@ -58,5 +59,17 @@ def product_list_api(request):
 
 
 def register_order(request):
-    # TODO это лишь заглушка
+    #url = 'http://127.0.0.1:8000/api/order/'
+
+    def order_detail(request):
+        try:
+            return json.loads(request.body.decode())
+        except ValueError:
+            return JsonResponse({
+                'error': 'Введите корректное значение',
+            })
+
+    print(order_detail(request))
+    
+
     return JsonResponse({})

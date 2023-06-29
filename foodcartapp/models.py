@@ -150,22 +150,31 @@ class Order(models.Model):
         verbose_name_plural = 'Заказы'
 
     def __str__(self):
-        return self.first_name, self.last_name, self.address
+        return self.first_name
 
 
-class Order_details(models.Model):
+class OrderDetails(models.Model):
     order = models.ForeignKey(
         Order,
         verbose_name='Заказ',
-        related_name='Детали заказа',
+        related_name='order_consist',
         on_delete=models.CASCADE
     )
     product = models.ForeignKey(
         Product,
         verbose_name='Продукт',
-        related_name='Количество',
+        related_name='products',
         on_delete=models.CASCADE
     )
     count = models.PositiveIntegerField(
         verbose_name='Количество'
     )
+
+    class Meta:
+        verbose_name = 'Состав заказа'
+        verbose_name_plural = 'Состав заказов'
+
+    def __str__(self):
+        return self.order.first_name
+
+

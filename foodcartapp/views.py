@@ -2,8 +2,7 @@ import json
 from django.http import JsonResponse
 from django.templatetags.static import static
 
-
-from .models import Product
+from .models import Product, Order, OrderDetails
 
 
 def banners_list_api(request):
@@ -59,7 +58,7 @@ def product_list_api(request):
 
 
 def register_order(request):
-    #url = 'http://127.0.0.1:8000/api/order/'
+    # url = 'http://127.0.0.1:8000/api/order/'
 
     def order_detail(request):
         try:
@@ -69,7 +68,19 @@ def register_order(request):
                 'error': 'Введите корректное значение',
             })
 
-    print(order_detail(request))
-    
+    order_specification = order_detail(request)
+    order_db, created = Order.objects.get_or_create(
+        first_name=order_specification['firstname'],
+        last_name=order_specification['lastname'],
+        phone=order_specification['phonenumber'],
+        address=order_specification['address']
+    )
+    all_products = Product.objects.all()
+    for product in order_specification['products']:
+        OrderDetails.objects.get_or_create(
+            order=order_db,
+            product=all_products.get(id=product['product']),
+            count=product['quantity']
+        )
 
     return JsonResponse({})

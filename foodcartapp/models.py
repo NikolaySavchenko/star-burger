@@ -125,27 +125,6 @@ class RestaurantMenuItem(models.Model):
         return f"{self.restaurant.name} - {self.product.name}"
 
 
-class Item_count(models.Model):
-    product = models.ForeignKey(
-        Product,
-        verbose_name='Продукт',
-        related_name='Количество',
-        on_delete=models.PROTECT
-    )
-    count = models.PositiveIntegerField(
-        verbose_name='Количество'
-    )
-
-
-class Order_detail(models.Model):
-    item_count = models.ForeignKey(
-        Item_count,
-        verbose_name='Заказ клиента',
-        related_name='Клиенты',
-        on_delete=models.PROTECT
-    )
-
-
 class Order(models.Model):
     first_name = models.CharField(
         'Ваше имя',
@@ -166,16 +145,27 @@ class Order(models.Model):
         max_length=50
     )
 
-    order_detail = models.ForeignKey(
-        Order_detail,
-        verbose_name='Заказ клиента',
-        related_name='Клиенты',
-        on_delete=models.PROTECT
-    )
-
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
 
     def __str__(self):
         return self.first_name, self.last_name, self.address
+
+
+class Order_details(models.Model):
+    order = models.ForeignKey(
+        Order,
+        verbose_name='Заказ',
+        related_name='Детали заказа',
+        on_delete=models.CASCADE
+    )
+    product = models.ForeignKey(
+        Product,
+        verbose_name='Продукт',
+        related_name='Количество',
+        on_delete=models.CASCADE
+    )
+    count = models.PositiveIntegerField(
+        verbose_name='Количество'
+    )

@@ -98,8 +98,8 @@ class ProductAdmin(admin.ModelAdmin):
 
     class Media:
         css = {
-            "all": (
-                static("admin/foodcartapp.css")
+            'all': (
+                static('admin/foodcartapp.css')
             )
         }
 

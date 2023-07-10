@@ -1,4 +1,3 @@
-import json
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
@@ -61,10 +60,22 @@ def product_list_api(request):
 
 @api_view(['POST'])
 def register_order(request):
-    try:
-        order_specification = request.data
-    except ValueError:
-        return JsonResponse({'error': 'Введите корректное значение', })
+    order_specification = request.data
+
+    if not isinstance(order_specification['firstname'], str):
+        return Response(f'Введите корректные данные в поле Имя')
+    elif not isinstance(order_specification['lastname'], str):
+        return Response(f'Введите корректные данные в поле Фамилия')
+    elif not isinstance(order_specification['phonenumber'], str):
+        return Response(f'Введите корректные данные в поле Телефон')
+    elif not isinstance(order_specification['address'], str):
+        return Response(f'Введите корректные данные в поле Адрес')
+    elif not order_specification['products']:
+        return Response(f'Введите поле Продукты')
+    elif not isinstance(order_specification['products'], list) or \
+        len(order_specification['products']) < 1:
+        return Response(f'Введите данные в поле Продукты')
+
     order_db, created = Order.objects.get_or_create(
         first_name=order_specification['firstname'],
         last_name=order_specification['lastname'],
@@ -72,7 +83,14 @@ def register_order(request):
         address=order_specification['address']
     )
     all_products = Product.objects.all()
+
     for product in order_specification['products']:
+        if not product['product'] or not product['quantity']:
+            return Response(f'Введите поля Продукт и Количество')
+        elif not isinstance(product['product'], int) or not isinstance(product['quantity'], int):
+            return Response(f'Поля Продукт и Количество должны быть целым числом')
+        elif product['product'] < 1 or product['quantity'] < 1:
+            return Response(f'Поля Продукт и Количество должны быть положительным целым числом')
         OrderDetails.objects.get_or_create(
             order=order_db,
             product=all_products.get(id=product['product']),

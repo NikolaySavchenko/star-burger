@@ -1,5 +1,7 @@
 from django.http import JsonResponse
 from django.templatetags.static import static
+from phonenumber_field.phonenumber import PhoneNumber
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
@@ -62,19 +64,32 @@ def product_list_api(request):
 def register_order(request):
     order_specification = request.data
 
-    if not isinstance(order_specification['firstname'], str):
-        return Response(f'Введите корректные данные в поле Имя')
-    elif not isinstance(order_specification['lastname'], str):
-        return Response(f'Введите корректные данные в поле Фамилия')
-    elif not isinstance(order_specification['phonenumber'], str):
-        return Response(f'Введите корректные данные в поле Телефон')
-    elif not isinstance(order_specification['address'], str):
-        return Response(f'Введите корректные данные в поле Адрес')
-    elif not order_specification['products']:
-        return Response(f'Введите поле Продукты')
-    elif not isinstance(order_specification['products'], list) or \
-        len(order_specification['products']) < 1:
-        return Response(f'Введите данные в поле Продукты')
+    try:
+        if not isinstance(order_specification['firstname'], str) or \
+            len(order_specification['firstname']) < 1:
+            return Response(f'Введите корректные данные в поле Имя',
+                            status=status.HTTP_406_NOT_ACCEPTABLE)
+        elif not isinstance(order_specification['lastname'], str) or \
+            len(order_specification['lastname']) < 1:
+            return Response(f'Введите корректные данные в поле Фамилия',
+                            status=status.HTTP_406_NOT_ACCEPTABLE)
+        elif not PhoneNumber.from_string(order_specification['phonenumber']).is_valid():
+            return Response(f'Введите корректные данные в поле Телефон',
+                            status=status.HTTP_406_NOT_ACCEPTABLE)
+        elif not isinstance(order_specification['address'], str) or \
+            len(order_specification['address']) < 1:
+            return Response(f'Введите корректные данные в поле Адрес',
+                            status=status.HTTP_406_NOT_ACCEPTABLE)
+        elif not order_specification['products']:
+            return Response(f'Введите поле Продукты',
+                            status=status.HTTP_406_NOT_ACCEPTABLE)
+        elif not isinstance(order_specification['products'], list) or \
+            len(order_specification['products']) < 1:
+            return Response(f'Введите данные в поле Продукты',
+                            status=status.HTTP_406_NOT_ACCEPTABLE)
+    except:
+        return Response(f'Данные введены неверно!',
+                        status=status.HTTP_406_NOT_ACCEPTABLE)
 
     order_db, created = Order.objects.get_or_create(
         first_name=order_specification['firstname'],
@@ -83,14 +98,27 @@ def register_order(request):
         address=order_specification['address']
     )
     all_products = Product.objects.all()
+    ids = []
+    for product in all_products:
+        ids.append(product.id)
 
     for product in order_specification['products']:
-        if not product['product'] or not product['quantity']:
-            return Response(f'Введите поля Продукт и Количество')
-        elif not isinstance(product['product'], int) or not isinstance(product['quantity'], int):
-            return Response(f'Поля Продукт и Количество должны быть целым числом')
-        elif product['product'] < 1 or product['quantity'] < 1:
-            return Response(f'Поля Продукт и Количество должны быть положительным целым числом')
+        try:
+            if not product['product'] or not product['quantity']:
+                return Response(f'Введите поля Продукт и Количество',
+                                status=status.HTTP_406_NOT_ACCEPTABLE)
+            elif not isinstance(product['product'], int) or not isinstance(product['quantity'], int):
+                return Response(f'Поля Продукт и Количество должны быть целым числом',
+                                status=status.HTTP_406_NOT_ACCEPTABLE)
+            elif product['quantity'] < 1:
+                return Response(f'Поле Количество должны быть положительным целым числом',
+                                status=status.HTTP_406_NOT_ACCEPTABLE)
+            elif product['product'] not in ids:
+                return Response(f'Поле Продукт должны содержать существующий ID продукта',
+                                status=status.HTTP_406_NOT_ACCEPTABLE)
+        except:
+            return Response(f'Данные введены неверно!', status=status.HTTP_406_NOT_ACCEPTABLE)
+
         OrderDetails.objects.get_or_create(
             order=order_db,
             product=all_products.get(id=product['product']),

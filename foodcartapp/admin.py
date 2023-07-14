@@ -16,18 +16,18 @@ class RestaurantMenuItemInline(admin.TabularInline):
 
 class OrderDetailsInline(admin.StackedInline):
     model = OrderDetails
-    fields = [('product', 'count'), ]
+    fields = [('product', 'quantity'), ]
     extra = 0
 
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderDetailsInline]
-    list_display = ('first_name', 'last_name', 'phone', 'address')
+    list_display = ('firstname', 'lastname', 'phonenumber', 'address')
 
 @admin.register(OrderDetails)
 class Order_detailsAdmin(admin.ModelAdmin):
-    list_display = ('order', 'product', 'count')
+    list_display = ('order', 'product', 'quantity')
 
 
 @admin.register(Restaurant)

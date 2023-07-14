@@ -3,6 +3,7 @@ from django.templatetags.static import static
 from phonenumber_field.phonenumber import PhoneNumber
 from rest_framework import status
 from rest_framework.decorators import api_view
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from .models import Product, Order, OrderDetails
@@ -60,41 +61,70 @@ def product_list_api(request):
     })
 
 
+def order_validate(data):
+    errors = []
+    if 'firstname' not in data:
+        errors.append('Введите поле Имя')
+    elif not isinstance(data['firstname'], str) or \
+        len(data['firstname']) < 1:
+        errors.append('Введите корректные данные в поле Имя')
+    if 'lastname' not in data:
+        errors.append('Введите поле Фамилия')
+    elif not isinstance(data['lastname'], str) or \
+        len(data['lastname']) < 1:
+        errors.append('Введите корректные данные в поле Фамилия')
+    if 'phonenumber' not in data:
+        errors.append('Введите поле Телефон')
+    elif not isinstance(data['phonenumber'], str)or \
+        len(data['phonenumber']) < 1:
+        errors.append('Введите корректные данные в поле Телефон')
+    elif not PhoneNumber.from_string(data['phonenumber']).is_valid():
+        errors.append('Введите корректные данные в поле Телефон')
+    elif len(data['phonenumber']) < 1:
+        errors.append('Введите данные в поле Телефон')
+    if 'address' not in data:
+        errors.append('Введите поле Адрес')
+    elif not isinstance(data['address'], str) or \
+        len(data['address']) < 1:
+        errors.append('Введите корректные данные в поле Адрес')
+    if 'products' not in data:
+        errors.append('Введите поле Продукты')
+    elif not isinstance(data['products'], list) or \
+        len(data['products']) < 1:
+        errors.append('Введите данные в поле Продукты')
+
+    if errors:
+        raise ValidationError(errors)
+
+
+def product_validate(data, ids):
+    errors = []
+    if 'product' not in data:
+        errors.append('Введите поля Продукт')
+    elif not isinstance(data['product'], int):
+        errors.append('Поле Продукт должно содержать целое число')
+    elif data['product'] not in ids:
+        errors.append('Поле Продукт должны содержать существующий ID продукта')
+    if 'quantity' not in data:
+        errors.append('Введите поля Количество')
+    elif not isinstance(data['quantity'], int):
+        errors.append('Поле Количество должно содержать целое число')
+    elif data['quantity'] < 1:
+        errors.append('Поле Количество должно содержать положительное целое число')
+
+    if errors:
+        raise ValidationError(errors)
+
+
 @api_view(['POST'])
 def register_order(request):
     order_specification = request.data
-
-    try:
-        if not isinstance(order_specification['firstname'], str) or \
-            len(order_specification['firstname']) < 1:
-            return Response(f'Введите корректные данные в поле Имя',
-                            status=status.HTTP_406_NOT_ACCEPTABLE)
-        elif not isinstance(order_specification['lastname'], str) or \
-            len(order_specification['lastname']) < 1:
-            return Response(f'Введите корректные данные в поле Фамилия',
-                            status=status.HTTP_406_NOT_ACCEPTABLE)
-        elif not PhoneNumber.from_string(order_specification['phonenumber']).is_valid():
-            return Response(f'Введите корректные данные в поле Телефон',
-                            status=status.HTTP_406_NOT_ACCEPTABLE)
-        elif not isinstance(order_specification['address'], str) or \
-            len(order_specification['address']) < 1:
-            return Response(f'Введите корректные данные в поле Адрес',
-                            status=status.HTTP_406_NOT_ACCEPTABLE)
-        elif not order_specification['products']:
-            return Response(f'Введите поле Продукты',
-                            status=status.HTTP_406_NOT_ACCEPTABLE)
-        elif not isinstance(order_specification['products'], list) or \
-            len(order_specification['products']) < 1:
-            return Response(f'Введите данные в поле Продукты',
-                            status=status.HTTP_406_NOT_ACCEPTABLE)
-    except:
-        return Response(f'Данные введены неверно!',
-                        status=status.HTTP_406_NOT_ACCEPTABLE)
+    order_validate(order_specification)
 
     order_db, created = Order.objects.get_or_create(
-        first_name=order_specification['firstname'],
-        last_name=order_specification['lastname'],
-        phone=order_specification['phonenumber'],
+        firstname=order_specification['firstname'],
+        lastname=order_specification['lastname'],
+        phonenumber=order_specification['phonenumber'],
         address=order_specification['address']
     )
     all_products = Product.objects.all()
@@ -103,26 +133,11 @@ def register_order(request):
         ids.append(product.id)
 
     for product in order_specification['products']:
-        try:
-            if not product['product'] or not product['quantity']:
-                return Response(f'Введите поля Продукт и Количество',
-                                status=status.HTTP_406_NOT_ACCEPTABLE)
-            elif not isinstance(product['product'], int) or not isinstance(product['quantity'], int):
-                return Response(f'Поля Продукт и Количество должны быть целым числом',
-                                status=status.HTTP_406_NOT_ACCEPTABLE)
-            elif product['quantity'] < 1:
-                return Response(f'Поле Количество должны быть положительным целым числом',
-                                status=status.HTTP_406_NOT_ACCEPTABLE)
-            elif product['product'] not in ids:
-                return Response(f'Поле Продукт должны содержать существующий ID продукта',
-                                status=status.HTTP_406_NOT_ACCEPTABLE)
-        except:
-            return Response(f'Данные введены неверно!', status=status.HTTP_406_NOT_ACCEPTABLE)
-
+        product_validate(product, ids)
         OrderDetails.objects.get_or_create(
             order=order_db,
             product=all_products.get(id=product['product']),
-            count=product['quantity']
+            quantity=product['quantity']
         )
 
     return Response({})

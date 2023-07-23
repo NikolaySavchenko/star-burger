@@ -128,13 +128,11 @@ class RestaurantMenuItem(models.Model):
 class Order(models.Model):
     firstname = models.CharField(
         'Ваше имя',
-        max_length=20,
-        blank=True
+        max_length=20
     )
     lastname = models.CharField(
         'Ваша фамилия',
-        max_length=20,
-        blank=True
+        max_length=20
     )
     phonenumber = PhoneNumberField(
         'Номер телефона',

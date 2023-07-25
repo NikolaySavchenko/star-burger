@@ -66,11 +66,17 @@ class OrderProductSerializer(ModelSerializer):
 
 
 class OrderSerializer(ModelSerializer):
-    products = OrderProductSerializer(many=True, allow_empty=False)
+    products = OrderProductSerializer(many=True, allow_empty=False, write_only=True)
 
     class Meta:
         model = Order
-        fields = ['firstname', 'lastname', 'phonenumber', 'address', 'products']
+        fields = ['id', 'firstname', 'lastname', 'phonenumber', 'address', 'products']
+
+
+class OrderDBSerializer(ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['id', 'firstname', 'lastname', 'phonenumber', 'address']
 
 
 @api_view(['POST'])
@@ -86,6 +92,7 @@ def register_order(request):
         phonenumber=order_specification['phonenumber'],
         address=order_specification['address']
     )
+
     all_products = Product.objects.all()
 
     for product in order_specification['products']:
@@ -95,4 +102,15 @@ def register_order(request):
             quantity=product['quantity']
         )
 
-    return Response({})
+    order_response = {
+        'id': order_db.id,
+        'firstname': order_specification['firstname'],
+        'lastname': order_specification['lastname'],
+        'phonenumber': order_specification['phonenumber'],
+        'address': order_specification['address']
+    }
+
+    serializer_response = OrderDBSerializer(data=order_response)
+    serializer_response.is_valid(raise_exception=True)
+
+    return Response(order_response)

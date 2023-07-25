@@ -7,8 +7,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
-
-from foodcartapp.models import Product, Restaurant
+from foodcartapp.models import Product, Restaurant, Order
 
 
 class Login(forms.Form):
@@ -90,8 +89,20 @@ def view_restaurants(request):
     })
 
 
+def orders_for_manager(item):
+    return {
+        'id': item.id,
+        'name': item.firstname,
+        'phonenumber': item.phonenumber,
+        'address': item.address,
+    }
+
+
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    return render(request, template_name='order_items.html', context={
-        # TODO заглушка для нереализованного функционала
-    })
+    orders = Order.objects.all()
+    context = {
+        'orders': [orders_for_manager(item) for item in orders]
+    }
+
+    return render(request, template_name='order_items.html', context=context)

@@ -143,6 +143,7 @@ class Order(models.Model):
         max_length=50
     )
 
+
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
@@ -174,5 +175,3 @@ class OrderDetails(models.Model):
 
     def __str__(self):
         return self.order.firstname
-
-

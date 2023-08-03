@@ -89,18 +89,21 @@ def view_restaurants(request):
     })
 
 
-def orders_for_manager(order):
+def orders_for_manager(order, orders_details):
     return {
         'id': order.id,
-        'cost': get_cost(order),
+        'cost': get_cost(order, orders_details),
         'name': order.firstname,
         'phonenumber': order.phonenumber,
         'address': order.address,
     }
 
 
-def get_cost(order):
-    order_details = OrderDetails.objects.filter(order=order).select_related('product')
+def get_cost(order, orders_details):
+    order_details = []
+    for item in orders_details:
+        if item.order == order:
+            order_details.append(item)
     cost = 0
     for product in order_details:
         price = product.product.price
@@ -108,13 +111,14 @@ def get_cost(order):
         cost += (price * quantity)
     return cost
 
+
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     orders = Order.objects.all()
-    orders_details = OrderDetails.objects.all().select_related('product')
+    orders_details = OrderDetails.objects.all().prefetch_related('order').select_related('product')
 
     context = {
-        'orders': [orders_for_manager(order) for order in orders]
+        'orders': [orders_for_manager(order, orders_details) for order in orders]
     }
 
     return render(request, template_name='order_items.html', context=context)

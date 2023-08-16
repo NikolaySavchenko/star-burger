@@ -16,7 +16,7 @@ class RestaurantMenuItemInline(admin.TabularInline):
 
 class OrderDetailsInline(admin.StackedInline):
     model = OrderDetails
-    fields = [('product', 'quantity'), ]
+    fields = [('product', 'quantity', 'cost'), ]
     extra = 0
 
 

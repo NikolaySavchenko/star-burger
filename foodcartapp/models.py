@@ -168,6 +168,15 @@ class OrderDetails(models.Model):
     quantity = models.PositiveIntegerField(
         verbose_name='Количество'
     )
+    cost = models.DecimalField(
+        'Стоимость',
+        max_digits=8,
+        decimal_places=2,
+        validators=[MinValueValidator(0)]
+    )
+    def get_cost(self):
+        return self.product.price * self.quantity
+
 
     class Meta:
         verbose_name = 'Состав заказа'

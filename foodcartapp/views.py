@@ -99,7 +99,8 @@ def register_order(request):
         OrderDetails.objects.get_or_create(
             order=order_db,
             product=all_products.get(id=product['product'].id),
-            quantity=product['quantity']
+            quantity=product['quantity'],
+            cost=all_products.get(id=product['product'].id).price * product['quantity']
         )
 
     order_response = {

@@ -100,16 +100,11 @@ def orders_for_manager(order, orders_details):
 
 
 def get_cost(order, orders_details):
-    order_details = []
+    order_cost = 0
     for item in orders_details:
         if item.order == order:
-            order_details.append(item)
-    cost = 0
-    for product in order_details:
-        price = product.product.price
-        quantity = product.quantity
-        cost += (price * quantity)
-    return cost
+            order_cost += item.cost
+    return order_cost
 
 
 @user_passes_test(is_manager, login_url='restaurateur:login')

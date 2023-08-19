@@ -1,4 +1,5 @@
 from django import forms
+from django.db import transaction
 from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy
@@ -106,10 +107,10 @@ def get_cost(order, orders_details):
             order_cost += item.cost
     return order_cost
 
-
+@transaction.atomic
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.all()
+    orders = Order.objects.all().order_by('-id')
     orders_details = OrderDetails.objects.all().prefetch_related('order').select_related('product')
 
     context = {

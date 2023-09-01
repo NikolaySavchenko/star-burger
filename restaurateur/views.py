@@ -90,14 +90,15 @@ def view_restaurants(request):
     })
 
 
-def orders_for_manager(order, orders_details):
+def orders_for_manager(order, orders_details, current_url):
     return {
         'id': order.id,
         'cost': get_cost(order, orders_details),
         'name': order.firstname,
         'phonenumber': order.phonenumber,
         'address': order.address,
-        'edit_link': reverse('admin:foodcartapp_order_change', args=(order.id, ))
+        'edit_link': reverse('admin:foodcartapp_order_change', args=(order.id,)),
+        'currentUrl': current_url
     }
 
 
@@ -108,14 +109,16 @@ def get_cost(order, orders_details):
             order_cost += item.cost
     return order_cost
 
+
 @transaction.atomic
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
+    current_url = request.path
     orders = Order.objects.all().order_by('-id')
     orders_details = OrderDetails.objects.all().prefetch_related('order').select_related('product')
 
     context = {
-        'orders': [orders_for_manager(order, orders_details) for order in orders]
+        'orders': [orders_for_manager(order, orders_details, current_url) for order in orders]
     }
 
     return render(request, template_name='order_items.html', context=context)

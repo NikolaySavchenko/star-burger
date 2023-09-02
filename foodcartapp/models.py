@@ -133,11 +133,11 @@ class Order(models.Model):
         ('C', 'Завершен'),
     )
     firstname = models.CharField(
-        'Ваше имя',
+        'Имя клиента',
         max_length=20
     )
     lastname = models.CharField(
-        'Ваша фамилия',
+        'Фамилия клиента',
         max_length=20
     )
     phonenumber = PhoneNumberField(
@@ -158,6 +158,20 @@ class Order(models.Model):
     comment = models.CharField(
         'Комментарий',
         max_length=100,
+        blank=True
+    )
+    order_time = models.DateTimeField(
+        'Время получения заказ',
+        auto_now_add=True
+    )
+    call_time = models.DateTimeField(
+        'Время звонка',
+        null=True,
+        blank=True
+    )
+    delivery_time = models.DateTimeField(
+        'Время доставки',
+        null=True,
         blank=True
     )
 

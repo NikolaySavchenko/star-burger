@@ -94,6 +94,7 @@ def orders_for_manager(order, orders_details, current_url):
     return {
         'id': order.id,
         'status': order.get_status_display(),
+        'payment_method': order.get_payment_method_display(),
         'cost': get_cost(order, orders_details),
         'name': order.firstname,
         'phonenumber': order.phonenumber,

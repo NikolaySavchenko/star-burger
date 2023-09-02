@@ -39,12 +39,12 @@ class OrderAdmin(admin.ModelAdmin):
     fields = [
         'order_time',
         ('call_time', 'delivery_time'),
-        'status',
+        ('status', 'payment_method'),
         ('firstname', 'lastname'),
         ('phonenumber', 'address'),
         'comment'
     ]
-    list_filter = ('status', )
+    list_filter = ('status', 'payment_method')
 
     def response_post_save_change(self, request, obj):
         res = super().response_post_save_change(request, obj)

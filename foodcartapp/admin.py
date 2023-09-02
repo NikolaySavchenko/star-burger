@@ -27,7 +27,7 @@ class OrderDetailsInline(admin.StackedInline):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderDetailsInline]
-    list_display = ('firstname', 'lastname', 'phonenumber', 'address')
+    list_display = ('status', 'firstname', 'lastname', 'phonenumber', 'address')
 
     def response_post_save_change(self, request, obj):
         res = super().response_post_save_change(request, obj)

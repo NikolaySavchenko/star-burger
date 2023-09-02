@@ -126,6 +126,12 @@ class RestaurantMenuItem(models.Model):
 
 
 class Order(models.Model):
+    STATUS = (
+        ('N', 'Новый'),
+        ('R', 'Готовиться'),
+        ('D', 'Доставляется'),
+        ('C', 'Завершен'),
+    )
     firstname = models.CharField(
         'Ваше имя',
         max_length=20
@@ -142,7 +148,13 @@ class Order(models.Model):
         'Адрес доставки',
         max_length=50
     )
-
+    status = models.CharField(
+        'Статус заказа',
+        max_length=1,
+        choices=STATUS,
+        default='N',
+        db_index=True
+    )
 
     class Meta:
         verbose_name = 'Заказ'

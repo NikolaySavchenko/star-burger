@@ -93,6 +93,7 @@ def view_restaurants(request):
 def orders_for_manager(order, orders_details, current_url):
     return {
         'id': order.id,
+        'status': order.get_status_display(),
         'cost': get_cost(order, orders_details),
         'name': order.firstname,
         'phonenumber': order.phonenumber,
@@ -114,7 +115,7 @@ def get_cost(order, orders_details):
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     current_url = request.path
-    orders = Order.objects.all().order_by('-id')
+    orders = Order.objects.exclude(status='C').order_by('-id')
     orders_details = OrderDetails.objects.all().prefetch_related('order').select_related('product')
 
     context = {

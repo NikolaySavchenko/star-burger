@@ -155,6 +155,11 @@ class Order(models.Model):
         default='N',
         db_index=True
     )
+    comment = models.CharField(
+        'Комментарий',
+        max_length=100,
+        blank=True
+    )
 
     class Meta:
         verbose_name = 'Заказ'
@@ -186,9 +191,9 @@ class OrderDetails(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(0)]
     )
+
     def get_cost(self):
         return self.product.price * self.quantity
-
 
     class Meta:
         verbose_name = 'Состав заказа'

@@ -98,6 +98,7 @@ def orders_for_manager(order, orders_details, current_url):
         'name': order.firstname,
         'phonenumber': order.phonenumber,
         'address': order.address,
+        'comment': order.comment,
         'edit_link': reverse('admin:foodcartapp_order_change', args=(order.id,)),
         'currentUrl': current_url
     }

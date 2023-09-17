@@ -37,7 +37,7 @@ class OrderAdmin(admin.ModelAdmin):
     )
     readonly_fields = ('order_time',)
     fields = [
-        'order_time',
+        ('order_time', 'restaurant'),
         ('call_time', 'delivery_time'),
         ('status', 'payment_method'),
         ('firstname', 'lastname'),

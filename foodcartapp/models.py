@@ -185,6 +185,14 @@ class Order(models.Model):
         default='C',
         db_index=True
     )
+    restaurant = models.ForeignKey(
+        Restaurant,
+        verbose_name='Готовиться в ресторане',
+        related_name='orders_preparing',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
 
     class Meta:
         verbose_name = 'Заказ'
@@ -216,9 +224,6 @@ class OrderDetails(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(0)]
     )
-
-    def get_cost(self):
-        return self.product.price * self.quantity
 
     class Meta:
         verbose_name = 'Состав заказа'

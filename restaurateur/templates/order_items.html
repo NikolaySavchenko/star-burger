@@ -21,6 +21,7 @@
       <th>Телефон</th>
       <th>Адрес доставки</th>
       <th>Комментарий</th>
+      <th>Рестораны</th>
       <th>Редактировать</th>
     </tr>
 
@@ -33,7 +34,22 @@
         <td>{{ item.name }}</td>
         <td>{{ item.phonenumber }}</td>
         <td>{{ item.address }}</td>
-        <td>{{ item.comment }}</td>
+        {% if item.comment %}
+          <td>
+            <details>
+              <summary style="color:#2E8B57">Comment</summary>
+              {{ item.comment }}
+            </details>
+          </td>
+        {% else %}
+          <td style="color:#DC143C">No comment</td>
+        {% endif %}
+        <td>
+          <details>
+            <summary style="color:#2E8B57">Restaurants</summary>
+            {{ item.restaurant }}
+          </details>
+        </td>
         <td><a href="{{ item.edit_link }}?next={{ item.currentUrl|urlencode}}">Редактировать</a></td>
       </tr>
     {% endfor %}

@@ -1,5 +1,6 @@
 from django import forms
 from django.db import transaction
+from django.db.models import Case, Value, When, IntegerField
 from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy, reverse
@@ -8,7 +9,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
-from foodcartapp.models import Product, Restaurant, Order, OrderDetails
+from foodcartapp.models import Product, Restaurant, Order, OrderDetails, RestaurantMenuItem
 
 
 class Login(forms.Form):
@@ -90,38 +91,71 @@ def view_restaurants(request):
     })
 
 
-def orders_for_manager(order, orders_details, current_url):
+def orders_for_manager(order, orders_details, current_url, restaurants_menu):
+    order_details = get_orders_details(order, orders_details, restaurants_menu)
+    if order.restaurant:
+        restaurant = f'Готовиться в: {order.restaurant.name}'
+    else:
+        restaurant = f'Может быть приготовлено в: {order_details["restaurants"]}'
     return {
         'id': order.id,
         'status': order.get_status_display(),
         'payment_method': order.get_payment_method_display(),
-        'cost': get_cost(order, orders_details),
+        'cost': order_details['order_cost'],
         'name': order.firstname,
         'phonenumber': order.phonenumber,
         'address': order.address,
         'comment': order.comment,
+        'restaurant': restaurant,
         'edit_link': reverse('admin:foodcartapp_order_change', args=(order.id,)),
         'currentUrl': current_url
     }
 
 
-def get_cost(order, orders_details):
+def get_orders_details(order, orders_details, restaurants_menu):
     order_cost = 0
+    order_restaurants = set()
+    order_details = set()
+
     for item in orders_details:
         if item.order == order:
-            order_cost += item.cost
-    return order_cost
+            order_details.add(item)
+
+    for item in order_details:
+        order_cost += item.cost
+        product_restaurants = set()
+        for restaurant_menu in restaurants_menu:
+            if restaurant_menu.product == item.product and restaurant_menu.availability:
+                product_restaurants.add(restaurant_menu)
+        restaurants_name = set()
+        for restaurant in product_restaurants:
+            restaurants_name.add(restaurant.restaurant.name)
+        if not order_restaurants:
+            order_restaurants = restaurants_name
+        else:
+            order_restaurants = order_restaurants.intersection(restaurants_name)
+
+    return {'order_cost': order_cost, 'restaurants': order_restaurants}
 
 
 @transaction.atomic
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     current_url = request.path
-    orders = Order.objects.exclude(status='C').order_by('-id')
+    orders = Order.objects.exclude(status='C').prefetch_related('restaurant').annotate(
+        status_sort=Case(
+            When(status='N', then=Value(1)),
+            When(status='R', then=Value(2)),
+            When(status='D', then=Value(3)),
+            When(status='C', then=Value(4)),
+            output_field=IntegerField(),
+        )
+    ).order_by('status_sort', 'id')
     orders_details = OrderDetails.objects.all().prefetch_related('order').select_related('product')
+    restaurants_menu = RestaurantMenuItem.objects.all().prefetch_related('product').select_related('restaurant')
 
     context = {
-        'orders': [orders_for_manager(order, orders_details, current_url) for order in orders]
+        'orders': [orders_for_manager(order, orders_details, current_url, restaurants_menu) for order in orders]
     }
 
     return render(request, template_name='order_items.html', context=context)

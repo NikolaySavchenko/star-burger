@@ -1,4 +1,6 @@
+import requests
 from django import forms
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Case, Value, When, IntegerField
 from django.shortcuts import redirect, render
@@ -8,6 +10,8 @@ from django.contrib.auth.decorators import user_passes_test
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
+from environs import Env
+from geopy import distance
 
 from foodcartapp.models import Product, Restaurant, Order, OrderDetails, RestaurantMenuItem
 
@@ -91,6 +95,25 @@ def view_restaurants(request):
     })
 
 
+def fetch_coordinates(address):
+    apikey = settings.APIKEY
+    base_url = "https://geocode-maps.yandex.ru/1.x"
+    response = requests.get(base_url, params={
+        "geocode": address,
+        "apikey": apikey,
+        "format": "json",
+    })
+    response.raise_for_status()
+    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+
+    if not found_places:
+        return None
+
+    most_relevant = found_places[0]
+    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+    return lon, lat
+
+
 def orders_for_manager(order, orders_details, current_url, restaurants_menu):
     order_details = get_orders_details(order, orders_details, restaurants_menu)
     if order.restaurant:
@@ -121,21 +144,37 @@ def get_orders_details(order, orders_details, restaurants_menu):
         if item.order == order:
             order_details.add(item)
 
+    client_coordinates = fetch_coordinates(order.address)
+
     for item in order_details:
         order_cost += item.cost
         product_restaurants = set()
         for restaurant_menu in restaurants_menu:
             if restaurant_menu.product == item.product and restaurant_menu.availability:
-                product_restaurants.add(restaurant_menu)
-        restaurants_name = set()
-        for restaurant in product_restaurants:
-            restaurants_name.add(restaurant.restaurant.name)
-        if not order_restaurants:
-            order_restaurants = restaurants_name
-        else:
-            order_restaurants = order_restaurants.intersection(restaurants_name)
+                product_restaurants.add(restaurant_menu.restaurant)
 
-    return {'order_cost': order_cost, 'restaurants': order_restaurants}
+        if not order_restaurants:
+            order_restaurants = product_restaurants
+        else:
+            order_restaurants = order_restaurants.intersection(product_restaurants)
+
+    restaurants_name = {}
+    for restaurant in order_restaurants:
+        if client_coordinates != None:
+            distance_to_restaurant = format(
+                distance.distance(
+                    (client_coordinates[1], client_coordinates[0]),
+                    (restaurant.latitude, restaurant.longitude)
+                ).km, '.2f'
+            )
+            restaurants_name[restaurant.name] = distance_to_restaurant
+        else:
+            restaurants_name[restaurant.name] = 'Неизвестный адрес'
+
+    return {
+        'order_cost': order_cost,
+        'restaurants': sorted(restaurants_name.items(), key=lambda x: x[1])
+    }
 
 
 @transaction.atomic
@@ -152,7 +191,7 @@ def view_orders(request):
         )
     ).order_by('status_sort', 'id')
     orders_details = OrderDetails.objects.all().prefetch_related('order').select_related('product')
-    restaurants_menu = RestaurantMenuItem.objects.all().prefetch_related('product').select_related('restaurant')
+    restaurants_menu = RestaurantMenuItem.objects.all().prefetch_related('restaurant').select_related('product')
 
     context = {
         'orders': [orders_for_manager(order, orders_details, current_url, restaurants_menu) for order in orders]

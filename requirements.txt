@@ -6,4 +6,5 @@ django-phonenumber-field==7.1.*
 phonenumbers==8.13.*
 djangorestframework==3.14.*
 requests==2.31.*
+geopy==2.4.*
 

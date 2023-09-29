@@ -14,6 +14,9 @@ class Restaurant(models.Model):
         max_length=100,
         blank=True,
     )
+    longitude = models.CharField('Долгота', max_length=10)
+    latitude = models.CharField('Широта', max_length=10)
+
     contact_phone = models.CharField(
         'контактный телефон',
         max_length=50,

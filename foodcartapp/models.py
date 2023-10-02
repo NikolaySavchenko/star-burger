@@ -234,3 +234,24 @@ class OrderDetails(models.Model):
 
     def __str__(self):
         return self.order.firstname
+
+
+class Geolocation(models.Model):
+    address = models.CharField(
+        'Адрес',
+        max_length=50,
+        unique=True
+    )
+    longitude = models.CharField('Долгота', max_length=10)
+    latitude = models.CharField('Широта', max_length=10)
+    last_update = models.DateField(
+        'Дата последнего обновления',
+        auto_now=True
+    )
+
+    class Meta:
+        verbose_name = 'Геолокация'
+        verbose_name_plural = 'Геолокации'
+
+    def __str__(self):
+        return self.address

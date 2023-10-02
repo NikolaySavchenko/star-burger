@@ -6,7 +6,7 @@ from django.utils.html import format_html
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from django.conf import settings
-from .models import Product, OrderDetails
+from .models import Product, OrderDetails, Geolocation
 from .models import ProductCategory
 from .models import Restaurant
 from .models import RestaurantMenuItem
@@ -58,6 +58,10 @@ class OrderAdmin(admin.ModelAdmin):
 class Order_detailsAdmin(admin.ModelAdmin):
     list_display = ('order', 'product', 'quantity')
 
+
+@admin.register(Geolocation)
+class Geolocation_detailsAdmin(admin.ModelAdmin):
+    list_display = ('address', 'last_update')
 
 @admin.register(Restaurant)
 class RestaurantAdmin(admin.ModelAdmin):

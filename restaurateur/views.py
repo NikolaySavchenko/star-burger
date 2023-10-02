@@ -13,7 +13,7 @@ from django.contrib.auth import views as auth_views
 from environs import Env
 from geopy import distance
 
-from foodcartapp.models import Product, Restaurant, Order, OrderDetails, RestaurantMenuItem
+from foodcartapp.models import Product, Restaurant, Order, OrderDetails, RestaurantMenuItem, Geolocation
 
 
 class Login(forms.Form):
@@ -114,8 +114,8 @@ def fetch_coordinates(address):
     return lon, lat
 
 
-def orders_for_manager(order, orders_details, current_url, restaurants_menu):
-    order_details = get_orders_details(order, orders_details, restaurants_menu)
+def orders_for_manager(order, orders_details, current_url, restaurants_menu, geolocations):
+    order_details = get_orders_details(order, orders_details, restaurants_menu, geolocations)
     if order.restaurant:
         restaurant = f'Готовиться в: {order.restaurant.name}'
     else:
@@ -135,16 +135,27 @@ def orders_for_manager(order, orders_details, current_url, restaurants_menu):
     }
 
 
-def get_orders_details(order, orders_details, restaurants_menu):
+def get_orders_details(order, orders_details, restaurants_menu, geolocations):
     order_cost = 0
     order_restaurants = set()
     order_details = set()
+    client_coordinates = tuple()
+
+    for geolocation in geolocations:
+        if geolocation.address == order.address:
+            client_coordinates = (geolocation.longitude, geolocation.latitude)
+
+    if not client_coordinates:
+        client_coordinates = fetch_coordinates(order.address)
+        Geolocation.objects.create(
+            address=order.address,
+            longitude=client_coordinates[0],
+            latitude=client_coordinates[1]
+        )
 
     for item in orders_details:
         if item.order == order:
             order_details.add(item)
-
-    client_coordinates = fetch_coordinates(order.address)
 
     for item in order_details:
         order_cost += item.cost
@@ -192,9 +203,11 @@ def view_orders(request):
     ).order_by('status_sort', 'id')
     orders_details = OrderDetails.objects.all().prefetch_related('order').select_related('product')
     restaurants_menu = RestaurantMenuItem.objects.all().prefetch_related('restaurant').select_related('product')
+    geolocations = Geolocation.objects.all()
 
     context = {
-        'orders': [orders_for_manager(order, orders_details, current_url, restaurants_menu) for order in orders]
+        'orders': [orders_for_manager(order, orders_details, current_url, restaurants_menu, geolocations) for order in
+                   orders]
     }
 
     return render(request, template_name='order_items.html', context=context)

@@ -5,7 +5,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 
-from .models import Product, Order, OrderDetails
+from restaurateur.views import fetch_coordinates
+from .models import Product, Order, OrderDetails, Geolocation
 
 
 def banners_list_api(request):
@@ -93,6 +94,15 @@ def register_order(request):
         phonenumber=order_specification['phonenumber'],
         address=order_specification['address']
     )
+
+    if not Geolocation.objects.filter(address=order_specification['address']):
+        coordinates = fetch_coordinates(order_specification['address'])
+        if coordinates:
+            Geolocation.objects.create(
+                address = order_specification['address'],
+                longitude = coordinates[0],
+                latitude = coordinates[1]
+            )
 
     all_products = Product.objects.all()
 

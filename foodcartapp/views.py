@@ -3,10 +3,10 @@ from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.serializers import ModelSerializer
 
 from restaurateur.views import fetch_coordinates
 from .models import Product, Order, OrderDetails, Geolocation
+from .serializers import OrderSerializer, OrderDBSerializer
 
 
 def banners_list_api(request):
@@ -60,25 +60,6 @@ def product_list_api(request):
         'indent': 4,
     })
 
-
-class OrderProductSerializer(ModelSerializer):
-    class Meta:
-        model = OrderDetails
-        fields = ['product', 'quantity']
-
-
-class OrderSerializer(ModelSerializer):
-    products = OrderProductSerializer(many=True, allow_empty=False, write_only=True)
-
-    class Meta:
-        model = Order
-        fields = ['id', 'firstname', 'lastname', 'phonenumber', 'address', 'products']
-
-
-class OrderDBSerializer(ModelSerializer):
-    class Meta:
-        model = Order
-        fields = ['id', 'firstname', 'lastname', 'phonenumber', 'address']
 
 @transaction.atomic
 @api_view(['POST'])

@@ -1,5 +1,5 @@
 from django.db import models
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -131,7 +131,7 @@ class RestaurantMenuItem(models.Model):
 class Order(models.Model):
     STATUS = (
         ('N', 'Новый'),
-        ('R', 'Готовиться'),
+        ('R', 'Готовится'),
         ('D', 'Доставляется'),
         ('C', 'Завершен'),
     )
@@ -162,7 +162,7 @@ class Order(models.Model):
         default='N',
         db_index=True
     )
-    comment = models.CharField(
+    comment = models.TextField(
         'Комментарий',
         max_length=100,
         blank=True
@@ -219,7 +219,8 @@ class OrderDetails(models.Model):
         on_delete=models.CASCADE
     )
     quantity = models.PositiveIntegerField(
-        verbose_name='Количество'
+        verbose_name='Количество',
+        validators=[MaxValueValidator(99)]
     )
     cost = models.DecimalField(
         'Стоимость',

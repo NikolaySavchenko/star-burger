@@ -16,8 +16,12 @@ class OrderSerializer(ModelSerializer):
         model = Order
         fields = ['id', 'firstname', 'lastname', 'phonenumber', 'address', 'products']
 
+    def create(self, validation_data):
+        new_object = Order.objects.create(
+            firstname=validation_data.get('firstname'),
+            lastname=validation_data.get('lastname'),
+            phonenumber=validation_data.get('phonenumber'),
+            address=validation_data.get('address')
+        )
 
-class OrderDBSerializer(ModelSerializer):
-    class Meta:
-        model = Order
-        fields = ['id', 'firstname', 'lastname', 'phonenumber', 'address']
+        return new_object

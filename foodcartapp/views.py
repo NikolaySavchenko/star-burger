@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 from restaurateur.views import fetch_coordinates
 from .models import Product, Order, OrderDetails, Geolocation
-from .serializers import OrderSerializer, OrderDBSerializer
+from .serializers import OrderSerializer
 
 
 def banners_list_api(request):
@@ -66,44 +66,29 @@ def product_list_api(request):
 def register_order(request):
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
+    serializer.save()
 
+    order_db = serializer.data
     order_specification = serializer.validated_data
-
-    order_db = Order.objects.create(
-        firstname=order_specification['firstname'],
-        lastname=order_specification['lastname'],
-        phonenumber=order_specification['phonenumber'],
-        address=order_specification['address']
-    )
 
     if not Geolocation.objects.filter(address=order_specification['address']):
         coordinates = fetch_coordinates(order_specification['address'])
         if coordinates:
             Geolocation.objects.create(
-                address = order_specification['address'],
-                longitude = coordinates[0],
-                latitude = coordinates[1]
+                address=order_specification['address'],
+                longitude=coordinates[0],
+                latitude=coordinates[1]
             )
 
+    all_orders = Order.objects.all()
     all_products = Product.objects.all()
 
     for product in order_specification['products']:
         OrderDetails.objects.create(
-            order=order_db,
+            order=all_orders.get(id=order_db['id']),
             product=all_products.get(id=product['product'].id),
             quantity=product['quantity'],
             cost=all_products.get(id=product['product'].id).price * product['quantity']
         )
 
-    order_response = {
-        'id': order_db.id,
-        'firstname': order_specification['firstname'],
-        'lastname': order_specification['lastname'],
-        'phonenumber': order_specification['phonenumber'],
-        'address': order_specification['address']
-    }
-
-    serializer_response = OrderDBSerializer(data=order_response)
-    serializer_response.is_valid(raise_exception=True)
-
-    return Response(order_response)
+    return Response(order_db)

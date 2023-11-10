@@ -17,11 +17,14 @@ class OrderSerializer(ModelSerializer):
         fields = ['id', 'firstname', 'lastname', 'phonenumber', 'address', 'products']
 
     def create(self, validation_data):
-        new_object = Order.objects.create(
+        order = Order.objects.create(
             firstname=validation_data.get('firstname'),
             lastname=validation_data.get('lastname'),
             phonenumber=validation_data.get('phonenumber'),
             address=validation_data.get('address')
         )
+        for product in validation_data.get('products'):
+            new_detail = OrderDetails.objects.create(order=order, **product)
+            new_detail.cost_value()
 
-        return new_object
+        return order

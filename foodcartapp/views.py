@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from restaurateur.views import fetch_coordinates
-from .models import Product, Order, OrderDetails, Geolocation
+from .models import Product, Geolocation
 from .serializers import OrderSerializer
 
 
@@ -79,16 +79,5 @@ def register_order(request):
                 longitude=coordinates[0],
                 latitude=coordinates[1]
             )
-
-    all_orders = Order.objects.all()
-    all_products = Product.objects.all()
-
-    for product in order_specification['products']:
-        OrderDetails.objects.create(
-            order=all_orders.get(id=order_db['id']),
-            product=all_products.get(id=product['product'].id),
-            quantity=product['quantity'],
-            cost=all_products.get(id=product['product'].id).price * product['quantity']
-        )
 
     return Response(order_db)

@@ -48,6 +48,8 @@ class OrderAdmin(admin.ModelAdmin):
 
     def response_post_save_change(self, request, obj):
         res = super().response_post_save_change(request, obj)
+        for detail in obj.order_consist.all():
+            detail.cost_value()
         if "next" in request.GET and url_has_allowed_host_and_scheme(request.GET['next'], settings.ALLOWED_HOSTS):
             return HttpResponseRedirect(request.GET['next'])
         else:

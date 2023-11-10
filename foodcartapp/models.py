@@ -222,11 +222,19 @@ class OrderDetails(models.Model):
         verbose_name='Количество',
         validators=[MaxValueValidator(99)]
     )
+
+    def cost_value(self):
+        price = self.product.price
+        cost = price * self.quantity
+        self.cost = cost
+        self.save()
+
     cost = models.DecimalField(
         'Стоимость',
         max_digits=8,
         decimal_places=2,
-        validators=[MinValueValidator(0)]
+        validators=[MinValueValidator(0)],
+        null=True
     )
 
     class Meta:

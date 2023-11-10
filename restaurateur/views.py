@@ -117,7 +117,7 @@ def fetch_coordinates(address):
 def orders_for_manager(order, orders_details, current_url, restaurants_menu, geolocations):
     order_details = get_orders_details(order, orders_details, restaurants_menu, geolocations)
     if order.restaurant:
-        restaurant = f'Готовиться в: {order.restaurant.name}'
+        restaurant = f'Готовится в: {order.restaurant.name}'
     else:
         restaurant = f'Может быть приготовлено в: {order_details["restaurants"]}'
     return {

@@ -146,12 +146,15 @@ def get_orders_details(order, orders_details, restaurants_menu, geolocations):
             client_coordinates = (geolocation.longitude, geolocation.latitude)
 
     if not client_coordinates:
-        client_coordinates = fetch_coordinates(order.address)
-        Geolocation.objects.create(
-            address=order.address,
-            longitude=client_coordinates[0],
-            latitude=client_coordinates[1]
-        )
+        try:
+            client_coordinates = fetch_coordinates(order.address)
+            Geolocation.objects.create(
+                address=order.address,
+                longitude=client_coordinates[0],
+                latitude=client_coordinates[1]
+            )
+        except:
+            client_coordinates = None
 
     for item in orders_details:
         if item.order == order:
@@ -180,7 +183,7 @@ def get_orders_details(order, orders_details, restaurants_menu, geolocations):
             )
             restaurants_name[restaurant.name] = distance_to_restaurant
         else:
-            restaurants_name[restaurant.name] = 'Неизвестный адрес'
+            restaurants_name[restaurant.name] = 'Расстояние неизвестно'
 
     return {
         'order_cost': order_cost,

@@ -10,7 +10,6 @@ from django.contrib.auth.decorators import user_passes_test
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
-from environs import Env
 from geopy import distance
 
 from foodcartapp.models import Product, Restaurant, Order, OrderDetails, RestaurantMenuItem, Geolocation
@@ -136,7 +135,6 @@ def orders_for_manager(order, orders_details, current_url, restaurants_menu, geo
 
 
 def get_orders_details(order, orders_details, restaurants_menu, geolocations):
-    order_cost = 0
     order_restaurants = set()
     order_details = set()
     client_coordinates = tuple()
@@ -160,17 +158,18 @@ def get_orders_details(order, orders_details, restaurants_menu, geolocations):
         if item.order == order:
             order_details.add(item)
 
-    for item in order_details:
-        order_cost += item.cost
-        product_restaurants = set()
-        for restaurant_menu in restaurants_menu:
-            if restaurant_menu.product == item.product and restaurant_menu.availability:
-                product_restaurants.add(restaurant_menu.restaurant)
+    order_cost = sum(item.cost for item in order_details)
 
-        if not order_restaurants:
-            order_restaurants = product_restaurants
-        else:
-            order_restaurants = order_restaurants.intersection(product_restaurants)
+    product_restaurants = {
+        restaurant_menu.restaurant for item in order_details for restaurant_menu in
+        restaurants_menu if restaurant_menu.product == item.product and
+                            restaurant_menu.availability
+    }
+
+    if not order_restaurants:
+        order_restaurants = product_restaurants
+    else:
+        order_restaurants.intersection_update(product_restaurants)
 
     restaurants_name = {}
     for restaurant in order_restaurants:
@@ -200,7 +199,7 @@ def view_orders(request):
             When(status='N', then=Value(1)),
             When(status='R', then=Value(2)),
             When(status='D', then=Value(3)),
-            When(status='C', then=Value(4)),
+            default=Value(4),
             output_field=IntegerField(),
         )
     ).order_by('status_sort', 'id')

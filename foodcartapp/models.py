@@ -220,7 +220,7 @@ class OrderDetails(models.Model):
     )
     quantity = models.PositiveIntegerField(
         verbose_name='Количество',
-        validators=[MaxValueValidator(99)]
+        validators=[MaxValueValidator(99), MinValueValidator(1)]
     )
 
     def cost_value(self):

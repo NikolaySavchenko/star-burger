@@ -4,8 +4,7 @@ from django.templatetags.static import static
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from restaurateur.views import fetch_coordinates
-from .models import Product, Geolocation
+from .models import Product
 from .serializers import OrderSerializer
 
 
@@ -69,15 +68,5 @@ def register_order(request):
     serializer.save()
 
     order_db = serializer.data
-    order_specification = serializer.validated_data
-
-    if not Geolocation.objects.filter(address=order_specification['address']):
-        coordinates = fetch_coordinates(order_specification['address'])
-        if coordinates:
-            Geolocation.objects.create(
-                address=order_specification['address'],
-                longitude=coordinates[0],
-                latitude=coordinates[1]
-            )
 
     return Response(order_db)

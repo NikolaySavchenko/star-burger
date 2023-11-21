@@ -234,7 +234,7 @@ class OrderDetails(models.Model):
         max_digits=8,
         decimal_places=2,
         validators=[MinValueValidator(0)],
-        null=True
+        default=1
     )
 
     class Meta:

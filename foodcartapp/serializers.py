@@ -1,6 +1,6 @@
 from rest_framework.serializers import ModelSerializer
 
-from foodcartapp.models import OrderDetails, Order, Geolocation
+from foodcartapp.models import OrderDetails, Order, Geolocation, Product
 from restaurateur.views import fetch_coordinates
 
 
@@ -25,7 +25,13 @@ class OrderSerializer(ModelSerializer):
             address=validation_data.get('address')
         )
         for product in validation_data.get('products'):
-            new_detail = OrderDetails.objects.create(order=order, **product)
+            print(product['product'])
+            new_detail = OrderDetails.objects.create(
+                order=order,
+                product=product['product'],
+                quantity=product['quantity'],
+                cost=Product.objects.get(name=product['product']).price
+            )
             new_detail.cost_value()
 
         if not Geolocation.objects.filter(address=order.address):

@@ -233,9 +233,8 @@ class OrderDetails(models.Model):
         'Стоимость',
         max_digits=8,
         decimal_places=2,
-        validators=[MinValueValidator(0)],
-        default=1
-    )
+        validators=[MinValueValidator(0)]
+        )
 
     class Meta:
         verbose_name = 'Состав заказа'
